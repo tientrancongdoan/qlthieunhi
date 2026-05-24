@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Hệ Thống Công Đoàn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex font-sans">
+    
+    <div class="w-64 bg-slate-800 text-white flex flex-col">
+        <div class="p-4 bg-slate-900 border-b border-slate-700">
+            <h2 class="text-xl font-bold">Admin Dashboard</h2>
+            <p class="text-xs text-slate-400 mt-1">Năm xét duyệt: 2026</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#" class="block px-4 py-2 bg-blue-600 rounded">Duyệt Hồ Sơ</a>
+            <a href="#" class="block px-4 py-2 hover:bg-slate-700 rounded">Quản lý Nhân sự</a>
+            <a href="#" class="block px-4 py-2 hover:bg-slate-700 rounded">Cài đặt hệ thống</a>
+        </nav>
+    </div>
+
+    <div class="flex-1 p-8">
+        <h1 class="text-2xl font-bold text-slate-800 mb-6">Quản Lý Đề Xuất Khen Thưởng / Thăm Hỏi</h1>
+
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">📂 Trích xuất dữ liệu Excel (Đã duyệt)</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
+                    ⬇️ Phụ lục 1 (1/6)
+                </button>
+                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
+                    ⬇️ Phụ lục 2a & 2b (Thăm hỏi)
+                </button>
+                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
+                    ⬇️ Phụ lục 3 (HSG Cấp Trường)
+                </button>
+                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
+                    ⬇️ Phụ lục 3 (HSG TP/QG)
+                </button>
+                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
+                    ⬇️ Phụ lục 4 (Học bổng NĐC)
+                </button>
+                <button class="bg-emerald-700 hover:bg-emerald-800 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
+                    ⬇️ Mẫu 03.1 (Gửi EVN)
+                </button>
+                <button class="bg-emerald-700 hover:bg-emerald-800 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
+                    ⬇️ Mẫu 03.2 (Gửi EVN)
+                </button>
+                <button class="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
+                    🖨️ Xuất PDF Trình ký
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-4 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="text-lg font-bold text-slate-800">Danh sách cần duyệt (Mới nhất)</h3>
+                <input type="text" placeholder="Tìm MSNV / Tên..." class="border px-3 py-1 rounded text-sm">
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-600 text-sm">
+                        <th class="p-3 border-b">MSNV</th>
+                        <th class="p-3 border-b">Người nộp (Đơn vị)</th>
+                        <th class="p-3 border-b">Hồ sơ / Người thụ hưởng</th>
+                        <th class="p-3 border-b text-center">Minh chứng</th>
+                        <th class="p-3 border-b text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 border-b font-medium">011144</td>
+                        <td class="p-3 border-b">
+                            Nguyễn Thị Ngọc Như<br>
+                            <span class="text-xs text-slate-500">PC Thuận An</span>
+                        </td>
+                        <td class="p-3 border-b">
+                            <span class="font-bold text-blue-700">HSG Cấp Trường (2026)</span><br>
+                            Cháu: Lê Ngọc Bình An (Lớp 9)
+                        </td>
+                        <td class="p-3 border-b text-center">
+                            <a href="#" class="text-blue-500 hover:underline">Xem File</a>
+                        </td>
+                        <td class="p-3 border-b text-center space-x-1">
+                            <button class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Duyệt</button>
+                            <button class="bg-orange-500 text-white px-3 py-1 rounded text-xs hover:bg-orange-600">Sửa</button>
+                            <button class="bg-slate-300 text-slate-700 px-3 py-1 rounded text-xs hover:bg-slate-400">Từ chối</button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 border-b font-medium">055213</td>
+                        <td class="p-3 border-b">
+                            Lương Thị Kim Huệ<br>
+                            <span class="text-xs text-slate-500">Đội DVKH</span>
+                        </td>
+                        <td class="p-3 border-b">
+                            <span class="font-bold text-red-600">Thăm hỏi Nữ BHN (2026)</span><br>
+                            Cho bản thân
+                        </td>
+                        <td class="p-3 border-b text-center">
+                            <a href="#" class="text-blue-500 hover:underline">Xem 2 File</a>
+                        </td>
+                        <td class="p-3 border-b text-center space-x-1">
+                            <button class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Duyệt</button>
+                            <button class="bg-orange-500 text-white px-3 py-1 rounded text-xs hover:bg-orange-600">Sửa</button>
+                            <button class="bg-slate-300 text-slate-700 px-3 py-1 rounded text-xs hover:bg-slate-400">Từ chối</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
