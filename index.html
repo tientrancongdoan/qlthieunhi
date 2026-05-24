@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khai báo Hồ sơ Công đoàn 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8 font-sans">
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-blue-800 uppercase">Công đoàn Công ty Lưới điện Cao thế TP.HCM</h1>
+            <p class="text-gray-600 mt-2 text-lg">Cổng Khai Báo Khen Thưởng & Thăm Hỏi Năm 2026</p>
+        </div>
+
+        <div id="login-section" class="bg-white p-8 rounded-lg shadow-md max-w-md mx-auto">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Nhập Mã Số Nhân Viên (MSNV)</label>
+            <input type="text" id="msnv-input" class="w-full border border-gray-300 p-3 rounded focus:ring-blue-500 focus:border-blue-500" placeholder="VD: 011144">
+            <button onclick="login()" class="mt-4 w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700 transition">Tra cứu thông tin</button>
+        </div>
+
+        <div id="dashboard-section" class="hidden space-y-6">
+            
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-600">
+                <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Thông Tin Người Lao Động</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <p><span class="text-gray-500">Họ và tên:</span> <strong id="nv-ten" class="text-gray-800">...</strong></p>
+                    <p><span class="text-gray-500">MSNV:</span> <strong id="nv-msnv" class="text-gray-800">...</strong></p>
+                    <p><span class="text-gray-500">Đơn vị công tác:</span> <strong id="nv-donvi" class="text-gray-800">...</strong></p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex justify-between items-center border-b pb-2 mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Danh Sách Người Phụ Thuộc (Con)</h3>
+                    <button class="text-sm bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200">+ Thêm con mới</button>
+                </div>
+                
+                <div id="ds-con" class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded border">
+                        <div>
+                            <p class="font-bold text-blue-700">Lê Ngọc Bình An</p>
+                            <p class="text-sm text-gray-500">Năm sinh: 2011 | Nữ</p>
+                        </div>
+                        <button onclick="openForm('Lê Ngọc Bình An')" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm font-medium shadow">
+                            Khai báo hồ sơ 2026
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-form" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg p-6 max-w-lg w-full">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Đề xuất khen thưởng/thăm hỏi 2026</h2>
+                <p class="text-sm text-gray-600 mb-4">Đang khai báo cho: <strong id="modal-ten-con" class="text-blue-600"></strong></p>
+                
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Loại đề xuất (Theo các phụ lục)</label>
+                        <select class="mt-1 w-full border border-gray-300 p-2 rounded">
+                            <option>-- Chọn loại --</option>
+                            <option>Phụ lục 1 - Quà Thiếu nhi 1/6</option>
+                            <option>Phụ lục 3 - HSG Cấp Trường</option>
+                            <option>Phụ lục 3 - HSG Cấp Thành Phố</option>
+                            <option>Phụ lục 4 - Học bổng Nguyễn Đức Cảnh</option>
+                            <option>Phụ lục 2a - Con bị bệnh hiểm nghèo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Lớp học (nếu có)</label>
+                        <input type="text" class="mt-1 w-full border border-gray-300 p-2 rounded" placeholder="VD: Lớp 9">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Thành tích / Ghi chú</label>
+                        <textarea class="mt-1 w-full border border-gray-300 p-2 rounded" rows="3" placeholder="Ghi rõ giải thưởng hoặc tóm tắt bệnh lý..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Đính kèm minh chứng (Hình ảnh/PDF)</label>
+                        <input type="file" class="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeForm()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Hủy</button>
+                        <button type="button" onclick="submitForm()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Nộp đề xuất</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Logic giả lập tương tác UI
+        function login() {
+            const msnv = document.getElementById('msnv-input').value;
+            if(!msnv) return alert('Vui lòng nhập MSNV!');
+            
+            // Giả lập load dữ liệu từ DB (Chốt dữ liệu gốc)
+            document.getElementById('nv-msnv').innerText = msnv;
+            document.getElementById('nv-ten').innerText = 'Nguyễn Thị Ngọc Như';
+            document.getElementById('nv-donvi').innerText = 'Đội DVKH - PC Thuận An';
+
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+        }
+
+        function openForm(tenCon) {
+            document.getElementById('modal-ten-con').innerText = tenCon;
+            document.getElementById('modal-form').classList.remove('hidden');
+        }
+
+        function closeForm() {
+            document.getElementById('modal-form').classList.add('hidden');
+        }
+
+        function submitForm() {
+            alert('Đã nộp đề xuất thành công! Trạng thái: Chờ Admin duyệt.');
+            closeForm();
+        }
+    </script>
+</body>
+</html>
