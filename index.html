@@ -78,7 +78,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Đính kèm minh chứng (Hình ảnh/PDF)</label>
                         <input type="file" id="file-input" accept="image/*,.pdf" class="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
-                        <p class="text-[10px] text-gray-400 mt-1">* File sẽ được tải lên Google Drive của Công đoàn</p>
+                        <p class="text-[10px] text-gray-400 mt-1">* File sẽ được tự động đổi tên và lưu vào Google Drive</p>
                     </div>
                     <div class="flex justify-end space-x-3 mt-6">
                         <button type="button" onclick="closeForm()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Hủy</button>
@@ -90,15 +90,42 @@
     </div>
 
     <script>
-        // --- CẤU HÌNH ---
+        // --- CẤU HÌNH API ---
         const SB_URL = "https://hhmcyscuhwvqgidktdzd.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhobWN5c2N1aHd2cWdpZGt0ZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MjgwMDEsImV4cCI6MjA5NTIwNDAwMX0.3yv9mJiwAV0AVBp8aCyo7qOGUCKxKFoX7nuznf9Cbzo";
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbw71fGbLtV89yrwCaa-0Q7ypkCPJanombhKi-MWw4kIPFkZvxAwP-rqlq9bWYoIdbfYKQ/exec";
+        
+        // Cập nhật link GAS mới nhất
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwVdtZcnar0Ou4jd_fHcq_rHhZ4_1fHc8uzNuaVbCsyBcItEWtZlgfy90EajhghpmITPA/exec";
 
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
         let currentNV = null;
 
-        // --- CHỨC NĂNG ---
+        // --- CÁC HÀM TIỆN ÍCH (HELPERS) ---
+        
+        // Chuyển file sang Base64
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // Chuyển tên tiếng Việt thành không dấu, viết liền
+        function taoTenKhongDau(str) {
+            return str.normalize('NFD')
+                      .replace(/[\u0300-\u036f]/g, '') // Bỏ dấu
+                      .replace(/đ/g, 'd').replace(/Đ/g, 'D') // Đổi chữ đ
+                      .replace(/\s+/g, ''); // Xóa khoảng trắng
+        }
+
+        // Bật/tắt UI Loading
+        function toggleLoading(show, text = "") {
+            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+            document.getElementById('loading-text').innerText = text;
+        }
+
+
+        // --- LOGIC GIAO DIỆN CHÍNH ---
 
         // 1. Đăng nhập & Tra cứu
         async function login() {
@@ -117,13 +144,13 @@
 
             if (nvError || !nvData) {
                 toggleLoading(false);
-                return alert('Không tìm thấy MSNV này trên hệ thống!');
+                return alert('Không tìm thấy MSNV này trên hệ thống hoặc nhân viên chưa được gán đơn vị!');
             }
 
             currentNV = nvData;
             const donVi = nvData.lich_su_cong_tac?.[0]?.don_vi || "Chưa xác định";
 
-            // Hiển thị UI Dashboard
+            // Hiển thị UI Dashboard (Dữ liệu thật từ database)
             document.getElementById('nv-msnv').innerText = nvData.msnv;
             document.getElementById('nv-ten').innerText = nvData.ho_ten;
             document.getElementById('nv-donvi').innerText = donVi;
@@ -135,7 +162,7 @@
             toggleLoading(false);
         }
 
-        // 2. Load danh sách con
+        // 2. Load danh sách con từ bảng nguoi_phu_thuoc
         async function loadDependents(nvId) {
             const { data, error } = await supabaseClient
                 .from('nguoi_phu_thuoc')
@@ -165,7 +192,7 @@
             }
         }
 
-        // 3. Modal Form
+        // 3. Quản lý Modal
         function openForm(id, ten) {
             document.getElementById('selected-con-id').value = id;
             document.getElementById('modal-ten-con').innerText = ten;
@@ -177,7 +204,7 @@
             document.getElementById('form-de-xuat').reset();
         }
 
-        // 4. Xử lý Nộp hồ sơ (Upload GAS -> Insert Supabase)
+        // 4. Xử lý Nộp hồ sơ & Upload File
         document.getElementById('form-de-xuat').onsubmit = async (e) => {
             e.preventDefault();
             
@@ -192,25 +219,42 @@
             toggleLoading(true, "Đang tải file lên Google Drive...");
 
             try {
-                // Bước A: Upload file lên Google Drive qua GAS
+                // A. Chuẩn bị dữ liệu gửi qua App Script
                 const file = fileInput.files[0];
-                const base64 = await toBase64(file);
+                const base64Data = await toBase64(file);
                 
+                // Lấy tên con và chuyển đổi sang dạng không dấu, viết liền
+                const tenConGoc = document.getElementById('modal-ten-con').innerText;
+                const tenConKhongDau = taoTenKhongDau(tenConGoc);
+                
+                // Lấy ngày hiện tại (Format DDMMYYYY)
+                const today = new Date();
+                const dd = String(today.getDate()).padStart(2, '0');
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const yyyy = today.getFullYear();
+                const ngayPdf = dd + mm + yyyy;
+
+                // Call API gửi file
                 const response = await fetch(GAS_URL, {
                     method: "POST",
                     body: JSON.stringify({
-                        file: base64.split(",")[1],
-                        filename: `${currentNV.msnv}_${file.name}`,
-                        mimeType: file.type
+                        base64: base64Data.split(",")[1], // Bỏ tiền tố data:image...
+                        fileName: file.name,
+                        msnv: currentNV.msnv,
+                        ten_con: tenConKhongDau,
+                        ngay_file_pdf: ngayPdf
                     })
                 });
                 
                 const result = await response.json();
-                if (!result.url) throw new Error("Không lấy được URL từ Google Drive");
+                
+                if (result.status === 'error' || !result.url) {
+                    throw new Error(result.message || "Lỗi từ Google Drive: Không lấy được URL");
+                }
 
-                toggleLoading(true, "Đang lưu thông tin hồ sơ...");
+                toggleLoading(true, "Đang lưu thông tin hồ sơ vào hệ thống...");
 
-                // Bước B: Lưu vào ho_so_de_xuat
+                // B. Lưu dữ liệu vào bảng ho_so_de_xuat
                 const { data: hoSo, error: hsError } = await supabaseClient
                     .from('ho_so_de_xuat')
                     .insert([{
@@ -227,18 +271,18 @@
 
                 if (hsError) throw hsError;
 
-                // Bước C: Lưu vào minh_chung_dinh_kem
+                // C. Lưu link file vào bảng minh_chung_dinh_kem
                 const { error: mcError } = await supabaseClient
                     .from('minh_chung_dinh_kem')
                     .insert([{
                         ho_so_id: hoSo.id,
                         loai_giay_to: "Minh chứng đính kèm",
-                        url_file: result.url
+                        url_file: result.url // URL trả về từ App Script
                     }]);
 
                 if (mcError) throw mcError;
 
-                alert("Nộp hồ sơ thành công! Hồ sơ của bạn đang chờ Admin xét duyệt.");
+                alert("Nộp hồ sơ thành công! File đã được tự động lưu với tên: " + result.fileName);
                 closeForm();
 
             } catch (error) {
@@ -248,20 +292,6 @@
                 toggleLoading(false);
             }
         };
-
-        // Helper: File to Base64
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-
-        // Helper: UI Loading
-        function toggleLoading(show, text = "") {
-            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
-            document.getElementById('loading-text').innerText = text;
-        }
     </script>
 </body>
 </html>
