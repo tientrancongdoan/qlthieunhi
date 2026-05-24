@@ -3,114 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Hệ Thống Công Đoàn</title>
+    <title>Khai báo Hồ sơ Công đoàn 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .loader { border-top-color: #3498db; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #loading-overlay { display: none; }
+    </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex font-sans">
+<body class="bg-gray-50 min-h-screen p-4 md:p-8 font-sans">
     
-    <div class="w-64 bg-slate-800 text-white flex flex-col">
-        <div class="p-4 bg-slate-900 border-b border-slate-700">
-            <h2 class="text-xl font-bold">Admin Dashboard</h2>
-            <p class="text-xs text-slate-400 mt-1">Năm xét duyệt: 2026</p>
-        </div>
-        <nav class="flex-1 p-4 space-y-2">
-            <a href="#" class="block px-4 py-2 bg-blue-600 rounded">Duyệt Hồ Sơ</a>
-            <a href="#" class="block px-4 py-2 hover:bg-slate-700 rounded">Quản lý Nhân sự</a>
-            <a href="#" class="block px-4 py-2 hover:bg-slate-700 rounded">Cài đặt hệ thống</a>
-        </nav>
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex flex-col items-center justify-center text-white">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+        <p id="loading-text">Đang xử lý...</p>
     </div>
 
-    <div class="flex-1 p-8">
-        <h1 class="text-2xl font-bold text-slate-800 mb-6">Quản Lý Đề Xuất Khen Thưởng / Thăm Hỏi</h1>
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-blue-800 uppercase">Công đoàn Công ty Lưới điện Cao thế TP.HCM</h1>
+            <p class="text-gray-600 mt-2 text-lg">Cổng Khai Báo Khen Thưởng & Thăm Hỏi Năm 2026</p>
+        </div>
 
-        <div class="bg-white p-6 rounded-lg shadow mb-8">
-            <h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">📂 Trích xuất dữ liệu Excel (Đã duyệt)</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
-                    ⬇️ Phụ lục 1 (1/6)
-                </button>
-                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
-                    ⬇️ Phụ lục 2a & 2b (Thăm hỏi)
-                </button>
-                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
-                    ⬇️ Phụ lục 3 (HSG Cấp Trường)
-                </button>
-                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
-                    ⬇️ Phụ lục 3 (HSG TP/QG)
-                </button>
-                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
-                    ⬇️ Phụ lục 4 (Học bổng NĐC)
-                </button>
-                <button class="bg-emerald-700 hover:bg-emerald-800 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
-                    ⬇️ Mẫu 03.1 (Gửi EVN)
-                </button>
-                <button class="bg-emerald-700 hover:bg-emerald-800 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
-                    ⬇️ Mẫu 03.2 (Gửi EVN)
-                </button>
-                <button class="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded shadow text-sm font-medium flex items-center justify-center">
-                    🖨️ Xuất PDF Trình ký
-                </button>
+        <div id="login-section" class="bg-white p-8 rounded-lg shadow-md max-w-md mx-auto">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Nhập Mã Số Nhân Viên (MSNV)</label>
+            <input type="text" id="msnv-input" class="w-full border border-gray-300 p-3 rounded focus:ring-blue-500 focus:border-blue-500 uppercase" placeholder="VD: 011144">
+            <button onclick="login()" id="btn-login" class="mt-4 w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700 transition">Tra cứu thông tin</button>
+        </div>
+
+        <div id="dashboard-section" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-600">
+                <div class="flex justify-between items-center border-b pb-2 mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Thông Tin Người Lao Động</h3>
+                    <button onclick="location.reload()" class="text-xs text-red-500 hover:underline">Thoát</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <p><span class="text-gray-500">Họ và tên:</span> <strong id="nv-ten" class="text-gray-800">...</strong></p>
+                    <p><span class="text-gray-500">MSNV:</span> <strong id="nv-msnv" class="text-gray-800">...</strong></p>
+                    <p class="md:col-span-2"><span class="text-gray-500">Đơn vị công tác:</span> <strong id="nv-donvi" class="text-gray-800">...</strong></p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex justify-between items-center border-b pb-2 mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Danh Sách Người Phụ Thuộc (Con)</h3>
+                </div>
+                <div id="ds-con" class="space-y-4">
+                    </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="p-4 border-b flex justify-between items-center bg-slate-50">
-                <h3 class="text-lg font-bold text-slate-800">Danh sách cần duyệt (Mới nhất)</h3>
-                <input type="text" placeholder="Tìm MSNV / Tên..." class="border px-3 py-1 rounded text-sm">
+        <div id="modal-form" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
+            <div class="bg-white rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Đề xuất khen thưởng/thăm hỏi 2026</h2>
+                <p class="text-sm text-gray-600 mb-4">Đang khai báo cho con: <strong id="modal-ten-con" class="text-blue-600"></strong></p>
+                
+                <form id="form-de-xuat" class="space-y-4">
+                    <input type="hidden" id="selected-con-id">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Loại đề xuất</label>
+                        <select id="loai-ho-so" class="mt-1 w-full border border-gray-300 p-2 rounded" required>
+                            <option value="">-- Chọn loại --</option>
+                            <option value="Quà Thiếu nhi 1/6">Phụ lục 1 - Quà Thiếu nhi 1/6</option>
+                            <option value="HSG Cấp Trường">Phụ lục 3 - HSG Cấp Trường</option>
+                            <option value="HSG Cấp Thành Phố">Phụ lục 3 - HSG Cấp Thành Phố</option>
+                            <option value="Học bổng Nguyễn Đức Cảnh">Phụ lục 4 - Học bổng Nguyễn Đức Cảnh</option>
+                            <option value="Con bị bệnh hiểm nghèo">Phụ lục 2a - Con bị bệnh hiểm nghèo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Chi tiết thành tích / Ghi chú</label>
+                        <textarea id="chi-tiet" class="mt-1 w-full border border-gray-300 p-2 rounded" rows="3" placeholder="Ghi rõ giải thưởng hoặc tóm tắt bệnh lý..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Đính kèm minh chứng (Hình ảnh/PDF)</label>
+                        <input type="file" id="file-input" accept="image/*,.pdf" class="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                        <p class="text-[10px] text-gray-400 mt-1">* File sẽ được tải lên Google Drive của Công đoàn</p>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeForm()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Hủy</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold">Nộp đề xuất</button>
+                    </div>
+                </form>
             </div>
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-100 text-slate-600 text-sm">
-                        <th class="p-3 border-b">MSNV</th>
-                        <th class="p-3 border-b">Người nộp (Đơn vị)</th>
-                        <th class="p-3 border-b">Hồ sơ / Người thụ hưởng</th>
-                        <th class="p-3 border-b text-center">Minh chứng</th>
-                        <th class="p-3 border-b text-center">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm">
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 border-b font-medium">011144</td>
-                        <td class="p-3 border-b">
-                            Nguyễn Thị Ngọc Như<br>
-                            <span class="text-xs text-slate-500">PC Thuận An</span>
-                        </td>
-                        <td class="p-3 border-b">
-                            <span class="font-bold text-blue-700">HSG Cấp Trường (2026)</span><br>
-                            Cháu: Lê Ngọc Bình An (Lớp 9)
-                        </td>
-                        <td class="p-3 border-b text-center">
-                            <a href="#" class="text-blue-500 hover:underline">Xem File</a>
-                        </td>
-                        <td class="p-3 border-b text-center space-x-1">
-                            <button class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Duyệt</button>
-                            <button class="bg-orange-500 text-white px-3 py-1 rounded text-xs hover:bg-orange-600">Sửa</button>
-                            <button class="bg-slate-300 text-slate-700 px-3 py-1 rounded text-xs hover:bg-slate-400">Từ chối</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 border-b font-medium">055213</td>
-                        <td class="p-3 border-b">
-                            Lương Thị Kim Huệ<br>
-                            <span class="text-xs text-slate-500">Đội DVKH</span>
-                        </td>
-                        <td class="p-3 border-b">
-                            <span class="font-bold text-red-600">Thăm hỏi Nữ BHN (2026)</span><br>
-                            Cho bản thân
-                        </td>
-                        <td class="p-3 border-b text-center">
-                            <a href="#" class="text-blue-500 hover:underline">Xem 2 File</a>
-                        </td>
-                        <td class="p-3 border-b text-center space-x-1">
-                            <button class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Duyệt</button>
-                            <button class="bg-orange-500 text-white px-3 py-1 rounded text-xs hover:bg-orange-600">Sửa</button>
-                            <button class="bg-slate-300 text-slate-700 px-3 py-1 rounded text-xs hover:bg-slate-400">Từ chối</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
     </div>
+
+    <script>
+        // --- CẤU HÌNH ---
+        const SB_URL = "https://hhmcyscuhwvqgidktdzd.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhobWN5c2N1aHd2cWdpZGt0ZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MjgwMDEsImV4cCI6MjA5NTIwNDAwMX0.3yv9mJiwAV0AVBp8aCyo7qOGUCKxKFoX7nuznf9Cbzo";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw71fGbLtV89yrwCaa-0Q7ypkCPJanombhKi-MWw4kIPFkZvxAwP-rqlq9bWYoIdbfYKQ/exec";
+
+        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+        let currentNV = null;
+
+        // --- CHỨC NĂNG ---
+
+        // 1. Đăng nhập & Tra cứu
+        async function login() {
+            const msnv = document.getElementById('msnv-input').value.trim().toUpperCase();
+            if(!msnv) return alert('Vui lòng nhập MSNV!');
+
+            toggleLoading(true, "Đang tra cứu nhân viên...");
+
+            // Lấy thông tin nhân viên và đơn vị hiện tại
+            const { data: nvData, error: nvError } = await supabaseClient
+                .from('nhan_vien')
+                .select(`id, msnv, ho_ten, lich_su_cong_tac(don_vi)`)
+                .eq('msnv', msnv)
+                .eq('lich_su_cong_tac.is_current', true)
+                .single();
+
+            if (nvError || !nvData) {
+                toggleLoading(false);
+                return alert('Không tìm thấy MSNV này trên hệ thống!');
+            }
+
+            currentNV = nvData;
+            const donVi = nvData.lich_su_cong_tac?.[0]?.don_vi || "Chưa xác định";
+
+            // Hiển thị UI Dashboard
+            document.getElementById('nv-msnv').innerText = nvData.msnv;
+            document.getElementById('nv-ten').innerText = nvData.ho_ten;
+            document.getElementById('nv-donvi').innerText = donVi;
+
+            await loadDependents(nvData.id);
+
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            toggleLoading(false);
+        }
+
+        // 2. Load danh sách con
+        async function loadDependents(nvId) {
+            const { data, error } = await supabaseClient
+                .from('nguoi_phu_thuoc')
+                .select('*')
+                .eq('nhan_vien_id', nvId)
+                .eq('is_active', true);
+
+            const container = document.getElementById('ds-con');
+            container.innerHTML = "";
+
+            if (data && data.length > 0) {
+                data.forEach(con => {
+                    container.innerHTML += `
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded border hover:shadow-sm transition">
+                            <div>
+                                <p class="font-bold text-blue-700">${con.ho_ten_con}</p>
+                                <p class="text-sm text-gray-500">Năm sinh: ${con.nam_sinh} | Giới tính: ${con.gioi_tinh}</p>
+                            </div>
+                            <button onclick="openForm('${con.id}', '${con.ho_ten_con}')" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm font-medium shadow">
+                                Khai báo 2026
+                            </button>
+                        </div>
+                    `;
+                });
+            } else {
+                container.innerHTML = `<p class="text-gray-400 italic text-sm text-center">Chưa có dữ liệu người phụ thuộc.</p>`;
+            }
+        }
+
+        // 3. Modal Form
+        function openForm(id, ten) {
+            document.getElementById('selected-con-id').value = id;
+            document.getElementById('modal-ten-con').innerText = ten;
+            document.getElementById('modal-form').classList.remove('hidden');
+        }
+
+        function closeForm() {
+            document.getElementById('modal-form').classList.add('hidden');
+            document.getElementById('form-de-xuat').reset();
+        }
+
+        // 4. Xử lý Nộp hồ sơ (Upload GAS -> Insert Supabase)
+        document.getElementById('form-de-xuat').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('file-input');
+            const loaiHoSo = document.getElementById('loai-ho-so').value;
+            const chiTiet = document.getElementById('chi-tiet').value;
+            const conId = document.getElementById('selected-con-id').value;
+            const donVi = document.getElementById('nv-donvi').innerText;
+
+            if (!fileInput.files[0]) return alert("Vui lòng chọn file minh chứng!");
+
+            toggleLoading(true, "Đang tải file lên Google Drive...");
+
+            try {
+                // Bước A: Upload file lên Google Drive qua GAS
+                const file = fileInput.files[0];
+                const base64 = await toBase64(file);
+                
+                const response = await fetch(GAS_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        file: base64.split(",")[1],
+                        filename: `${currentNV.msnv}_${file.name}`,
+                        mimeType: file.type
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.url) throw new Error("Không lấy được URL từ Google Drive");
+
+                toggleLoading(true, "Đang lưu thông tin hồ sơ...");
+
+                // Bước B: Lưu vào ho_so_de_xuat
+                const { data: hoSo, error: hsError } = await supabaseClient
+                    .from('ho_so_de_xuat')
+                    .insert([{
+                        nhan_vien_id: currentNV.id,
+                        nguoi_phu_thuoc_id: conId,
+                        loai_ho_so: loaiHoSo,
+                        nam_xet_duyet: 2026,
+                        don_vi_luu_cung: donVi,
+                        chi_tiet_thanh_tich: chiTiet,
+                        trang_thai: 'Chờ duyệt'
+                    }])
+                    .select()
+                    .single();
+
+                if (hsError) throw hsError;
+
+                // Bước C: Lưu vào minh_chung_dinh_kem
+                const { error: mcError } = await supabaseClient
+                    .from('minh_chung_dinh_kem')
+                    .insert([{
+                        ho_so_id: hoSo.id,
+                        loai_giay_to: "Minh chứng đính kèm",
+                        url_file: result.url
+                    }]);
+
+                if (mcError) throw mcError;
+
+                alert("Nộp hồ sơ thành công! Hồ sơ của bạn đang chờ Admin xét duyệt.");
+                closeForm();
+
+            } catch (error) {
+                console.error(error);
+                alert("Có lỗi xảy ra: " + error.message);
+            } finally {
+                toggleLoading(false);
+            }
+        };
+
+        // Helper: File to Base64
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // Helper: UI Loading
+        function toggleLoading(show, text = "") {
+            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+            document.getElementById('loading-text').innerText = text;
+        }
+    </script>
 </body>
 </html>
